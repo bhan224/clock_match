@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLOCKY
+MATCHING</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap');
+        
+        * {
+            font-family: 'Fredoka', 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bg-sky-world {
+            background: linear-gradient(180deg, #4A90E2 0%, #50E3C2 100%);
+        }
+
+        .text-stroke-gold {
+            -webkit-text-stroke: 2px #B78103;
+            text-shadow: 0 4px 0 #855B00, 0 6px 10px rgba(0,0,0,0.3);
+        }
+
+        .text-stroke-blue {
+            -webkit-text-stroke: 1.5px #1E3A8A;
+        }
+
+        .btn-orange-3d {
+            background: linear-gradient(180deg, #FF9800 0%, #F57C00 60%, #E65100 100%);
+            box-shadow: 0 8px 0 #B23C00, 0 12px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s ease;
+        }
+
+        .btn-orange-3d:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #B23C00, 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes dance {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-12px) rotate(-4deg) scale(1.02); }
+            50% { transform: translateY(0) rotate(0deg) scale(0.98); }
+            75% { transform: translateY(-12px) rotate(4deg) scale(1.02); }
+        }
+
+        .animate-dance {
+            animation: dance 1.8s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        @keyframes gear-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spin-gear {
+            animation: gear-spin 10s linear infinite;
+        }
+
+        .spin-gear-rev {
+            animation: gear-spin 12s linear infinite reverse;
+        }
+
+        .clock-hand {
+            transition: transform 0.1s cubic-bezier(0.1, 0.7, 0.1, 1);
+            transform-origin: 100px 100px;
+        }
+
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .match-node {
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-0 md:p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-[420px] h-[100vh] md:h-[860px] bg-sky-world md:rounded-[36px] border-0 md:border-8 border-amber-800/40 shadow-2xl overflow-hidden flex flex-col justify-between">
+        
+        <!-- TOP STATS BAR -->
+        <div class="relative z-25 flex justify-between items-center p-4 pt-5">
+            <div class="flex items-center bg-blue-600/90 border-2 border-white rounded-full px-3 py-1 shadow-lg text-white font-bold text-sm">
+                <div class="w-7 h-7 rounded-full bg-amber-400 border border-white text-blue-900 flex items-center justify-center -ml-2 mr-2 font-black shadow">
+                    <span id="display-level">1</span>
+                </div>
+                <span>Level: <span id="display-level-num">1</span></span>
+            </div>
+
+            <!-- Sound Toggle Button -->
+            <button id="btn-sound-toggle" class="bg-amber-500/95 hover:bg-amber-600 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center text-white shadow-lg transition-transform active:scale-95">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-sm"></i>
+            </button>
+        </div>
+
+        <!-- BACKGROUND GEARS -->
+        <div class="absolute inset-0 z-0 pointer-events-none opacity-30">
+            <i class="fa-solid fa-gear spin-gear absolute -left-12 top-24 text-amber-500 text-8xl"></i>
+            <i class="fa-solid fa-gear spin-gear-rev absolute -right-10 top-48 text-amber-600 text-9xl"></i>
+        </div>
+
+        <!-- ==================== HOME SCREEN ==================== -->
+        <div id="screen-home" class="relative z-10 flex-1 flex flex-col items-center justify-between py-6 px-4">
+            
+            <div class="text-center mt-2 relative w-full flex flex-col items-center">
+                <div class="flex items-center justify-center space-x-1 my-1">
+                    <i class="fa-solid fa-gear spin-gear text-3xl text-amber-300 drop-shadow-md"></i>
+                    
+                    <svg class="w-72 h-32 overflow-visible" viewBox="0 0 300 110">
+                        <defs>
+                            <path id="titlePath1" d="M 30 35 Q 150 10 270 35" fill="none" />
+                            <path id="titlePath2" d="M 30 85 Q 150 60 270 85" fill="none" />
+                        </defs>
+                        <text font-family="'Fredoka', 'Nunito', sans-serif" font-weight="900" font-size="34" fill="#FBBF24" stroke="#855B00" stroke-width="3" letter-spacing="1">
+                            <textPath href="#titlePath1" startOffset="50%" text-anchor="middle">
+                                CL<tspan dy="-3" fill="#F59E0B">🕒</tspan>CKY
+                            </textPath>
+                        </text>
+                        <text font-family="'Fredoka', 'Nunito', sans-serif" font-weight="900" font-size="34" fill="#FBBF24" stroke="#855B00" stroke-width="3" letter-spacing="1">
+                            <textPath href="#titlePath2" startOffset="50%" text-anchor="middle">
+                                MATCHING
+                            </textPath>
+                        </text>
+                    </svg>
+
+                    <i class="fa-solid fa-gear spin-gear-rev text-3xl text-amber-400 drop-shadow-md"></i>
+                </div>
+                <p class="text-xs text-white font-bold bg-amber-600/80 backdrop-blur-sm px-3 py-1 rounded-full inline-block mt-0 border border-amber-300 shadow">
+                    Clock Sets & Official C2 Advanced Phrasal Verbs Mastery!
+                </p>
+            </div>
+
+            <!-- DANCING MASCOT -->
+            <div class="my-auto flex flex-col items-center justify-center relative">
+                <div class="animate-dance relative">
+                    <svg class="w-64 h-64 drop-shadow-2xl" viewBox="0 0 200 220">
+                        <path d="M 70 170 Q 60 195 50 195" fill="none" stroke="#D97706" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M 130 170 Q 140 195 150 195" fill="none" stroke="#D97706" stroke-width="8" stroke-linecap="round"/>
+                        <ellipse cx="45" cy="195" rx="12" ry="6" fill="#B45309" />
+                        <ellipse cx="155" cy="195" rx="12" ry="6" fill="#B45309" />
+
+                        <path d="M 35 110 Q 15 90 25 70" fill="none" stroke="#D97706" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M 165 110 Q 185 90 175 70" fill="none" stroke="#D97706" stroke-width="7" stroke-linecap="round"/>
+                        <circle cx="25" cy="68" r="8" fill="#F59E0B" />
+                        <circle cx="175" cy="68" r="8" fill="#F59E0B" />
+
+                        <path d="M 50 40 L 35 25" stroke="#B45309" stroke-width="6" stroke-linecap="round"/>
+                        <path d="M 150 40 L 165 25" stroke="#B45309" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="32" cy="22" r="14" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+                        <circle cx="168" cy="22" r="14" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+
+                        <circle cx="100" cy="110" r="75" fill="#FBBF24" stroke="#B45309" stroke-width="8"/>
+                        <circle cx="100" cy="110" r="62" fill="#FFFBEB" stroke="#F59E0B" stroke-width="4"/>
+
+                        <ellipse cx="80" cy="90" rx="7" ry="10" fill="#1E293B"/>
+                        <ellipse cx="120" cy="90" rx="7" ry="10" fill="#1E293B"/>
+                        <circle cx="78" cy="87" r="3" fill="#FFFFFF"/>
+                        <circle cx="118" cy="87" r="3" fill="#FFFFFF"/>
+                        <circle cx="68" cy="105" r="7" fill="#F43F5E" opacity="0.5"/>
+                        <circle cx="132" cy="105" r="7" fill="#F43F5E" opacity="0.5"/>
+                        <path d="M 80 115 Q 100 135 120 115" fill="none" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/>
+
+                        <line x1="100" y1="110" x2="100" y2="75" stroke="#E11D48" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="100" y1="110" x2="125" y2="110" stroke="#0284C7" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="100" cy="110" r="5" fill="#1E293B"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- PLAY BUTTON -->
+            <div class="w-full space-y-3 mb-6">
+                <button id="btn-start" class="w-full btn-orange-3d py-4 rounded-2xl flex flex-col items-center justify-center border-2 border-amber-200/60 group">
+                    <div class="flex items-center space-x-3 text-white text-3xl font-black tracking-wider text-stroke-blue">
+                        <span>PLAY NOW</span>
+                        <i class="fa-solid fa-play text-2xl text-yellow-300 group-hover:scale-125 transition-transform"></i>
+                    </div>
+                    <span class="text-amber-100 text-xs font-semibold tracking-wide">Alternate Clock & C2 Phrasal Verb Matches</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== CLOCK GAMEPLAY SCREEN ==================== -->
+        <div id="screen-game-clock" class="relative z-10 flex-1 flex flex-col justify-between p-4 hidden">
+            
+            <div class="flex justify-between items-center bg-white/80 backdrop-blur-md p-3 rounded-2xl border-2 border-white shadow-md">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-clock text-amber-600 text-xl"></i>
+                    <div id="timer-display-clock" class="text-2xl font-black text-slate-800 tracking-tight">30s</div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-700">STREAK:</span>
+                    <span id="streak-display-clock" class="bg-amber-500 text-white font-black px-3 py-1 rounded-full text-base shadow">0 🔥</span>
+                </div>
+            </div>
+
+            <!-- Question Prompt Card -->
+            <div class="my-auto bg-gradient-to-b from-amber-400 to-amber-500 p-1 rounded-3xl shadow-xl border-2 border-amber-200">
+                <div class="bg-slate-900/90 rounded-[22px] p-4 text-center border border-amber-300/30">
+                    <span id="animal-theme-label" class="text-amber-300 text-xs font-bold uppercase tracking-widest block mb-1">🦁 Lion Clock Challenge</span>
+                    <h2 id="question-text" class="text-xl md:text-2xl font-black text-white tracking-wide leading-snug">
+                        "Set the clock to twenty-five past four"
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Interactive Clock SVG Area -->
+            <div class="relative w-full max-w-[260px] h-[260px] mx-auto my-auto flex items-center justify-center">
+                <svg id="interactive-clock" class="w-full h-full drop-shadow-2xl touch-none select-none overflow-visible" viewBox="0 0 200 200">
+                    <g id="clock-animal-container">
+                        <!-- Dynamic Animal Clock Ears & Face -->
+                    </g>
+
+                    <g font-size="13" font-weight="900" fill="#1E293B" text-anchor="middle" dominant-baseline="central">
+                        <text x="100" y="32">12</text>
+                        <text x="136" y="42">1</text>
+                        <text x="160" y="66">2</text>
+                        <text x="168" y="100">3</text>
+                        <text x="160" y="134">4</text>
+                        <text x="136" y="158">5</text>
+                        <text x="100" y="168">6</text>
+                        <text x="64" y="158">7</text>
+                        <text x="40" y="134">8</text>
+                        <text x="32" y="100">9</text>
+                        <text x="40" y="66">10</text>
+                        <text x="64" y="42">11</text>
+                    </g>
+
+                    <g id="ghost-hands" class="hidden">
+                        <line id="ghost-hour" x1="100" y1="100" x2="100" y2="55" stroke="#9333EA" stroke-width="8" stroke-linecap="round" stroke-dasharray="5 3"/>
+                        <line id="ghost-minute" x1="100" y1="100" x2="100" y2="30" stroke="#DB2777" stroke-width="6" stroke-linecap="round" stroke-dasharray="5 3"/>
+                    </g>
+
+                    <line id="hand-hour" class="clock-hand" x1="100" y1="100" x2="100" y2="60" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
+                    <line id="hand-minute" class="clock-hand" x1="100" y1="100" x2="100" y2="35" stroke="#E11D48" stroke-width="6" stroke-linecap="round"/>
+
+                    <circle cx="100" cy="100" r="7" fill="#1E293B" stroke="#FFFFFF" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="space-y-2">
+                <button id="btn-check-clock" class="w-full btn-orange-3d py-3.5 rounded-2xl text-white font-black text-xl tracking-wider text-stroke-blue border border-amber-200/50">
+                    CHECK ANSWER
+                </button>
+                <button id="btn-back-home-1" class="w-full text-center text-slate-700 font-bold text-xs py-1 hover:underline">
+                    ← Back to Home
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== MATCH THE WORD GAMEPLAY SCREEN ==================== -->
+        <div id="screen-game-match" class="relative z-10 flex-1 flex flex-col justify-between p-4 hidden">
+            
+            <div class="flex justify-between items-center bg-white/80 backdrop-blur-md p-3 rounded-2xl border-2 border-white shadow-md">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-puzzle-piece text-indigo-600 text-xl"></i>
+                    <div class="text-sm font-black text-indigo-900 uppercase">Match C2 Phrasal Verbs</div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-700">STREAK:</span>
+                    <span id="streak-display-match" class="bg-indigo-600 text-white font-black px-3 py-1 rounded-full text-base shadow">0 🔥</span>
+                </div>
+            </div>
+
+            <!-- Prompt instructions -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2.5 rounded-2xl text-center shadow-md text-white">
+                <span class="text-xs font-bold uppercase tracking-wider block text-indigo-200">Mini Game: Match C2 Mastery</span>
+                <p class="text-xs font-black">Tap a C2 Phrasal Verb in Column A, then tap its Vietnamese meaning in Column B!</p>
+            </div>
+
+            <!-- Two Columns for Matching with SVG Connection Line Overlay -->
+            <div id="match-container" class="relative grid grid-cols-2 gap-6 my-auto px-2">
+                <!-- SVG Line Overlay for connecting matched items -->
+                <svg id="match-lines-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"></svg>
+
+                <!-- Column A: Phrasal Verbs (C2) -->
+                <div class="space-y-2.5 z-20">
+                    <div class="text-center font-black text-xs text-slate-800 bg-amber-300 py-1 rounded-lg uppercase shadow">Column A (C2 Verb)</div>
+                    <div id="column-verbs" class="space-y-2.5">
+                        <!-- Dynamically populated C2 verbs -->
+                    </div>
+                </div>
+
+                <!-- Column B: Meanings -->
+                <div class="space-y-2.5 z-20">
+                    <div class="text-center font-black text-xs text-slate-800 bg-amber-300 py-1 rounded-lg uppercase shadow">Column B (Meaning)</div>
+                    <div id="column-meanings" class="space-y-2.5">
+                        <!-- Dynamically populated meanings -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meaning Display Box -->
+            <div id="meaning-box" class="bg-slate-900/95 border-2 border-indigo-400 p-3 rounded-2xl text-center shadow-xl hidden">
+                <span class="text-xs font-bold text-indigo-300 block mb-0.5">✨ Successfully Matched:</span>
+                <p id="meaning-text" class="text-white font-black text-sm md:text-base">put up with = chịu đựng kiên nhẫn</p>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="space-y-2">
+                <button id="btn-next-match" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 py-3.5 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg hidden">
+                    NEXT CHALLENGE →
+                </button>
+                <button id="btn-back-home-2" class="w-full text-center text-slate-700 font-bold text-xs py-1 hover:underline">
+                    ← Back to Home
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border-4 border-amber-400 transform transition-all scale-100">
+            <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner">
+                <i id="modal-icon" class="fa-solid fa-star"></i>
+            </div>
+            <h3 id="modal-title" class="text-2xl font-black text-slate-800 mb-2">Great Job!</h3>
+            <p id="modal-message" class="text-slate-600 font-medium text-sm mb-6 leading-relaxed">Advanced challenge mastered!</p>
+            <button id="modal-close-btn" class="w-full btn-orange-3d py-3 rounded-2xl text-white font-black text-lg tracking-wider">
+                CONTINUE
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let bgmInterval = null;
+        let isMuted = false;
+
+        const btnSoundToggle = document.getElementById('btn-sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+
+        btnSoundToggle.addEventListener('click', () => {
+            isMuted = !isMuted;
+            if (isMuted) {
+                soundIcon.className = "fa-solid fa-volume-xmark text-sm";
+                if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+            } else {
+                soundIcon.className = "fa-solid fa-volume-high text-sm";
+                if (!audioCtx) initAudio();
+                else if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+        });
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            if (!isMuted && audioCtx.state === 'suspended') audioCtx.resume();
+            startBGM();
+        }
+
+        function startBGM() {
+            if (bgmInterval) return;
+            // Upbeat playful background melody loop
+            const melodyNotes = [
+                { freq: 330.00, time: 0 },
+                { freq: 392.00, time: 0.25 },
+                { freq: 440.00, time: 0.5 },
+                { freq: 523.25, time: 0.75 },
+                { freq: 392.00, time: 1.25 },
+                { freq: 493.88, time: 1.5 },
+                { freq: 587.33, time: 1.75 },
+                { freq: 659.25, time: 2.0 },
+                { freq: 440.00, time: 2.5 },
+                { freq: 523.25, time: 2.75 },
+                { freq: 587.33, time: 3.0 },
+                { freq: 659.25, time: 3.25 },
+                { freq: 523.25, time: 3.75 },
+                { freq: 392.00, time: 4.0 },
+                { freq: 440.00, time: 4.25 },
+                { freq: 330.00, time: 4.5 }
+            ];
+
+            bgmInterval = setInterval(() => {
+                if (isMuted || !audioCtx || audioCtx.state !== 'running') return;
+                const now = audioCtx.currentTime;
+
+                melodyNotes.forEach(note => {
+                    try {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note.freq, now + note.time);
+                        gain.gain.setValueAtTime(0.001, now + note.time);
+                        gain.gain.linearRampToValueAtTime(0.04, now + note.time + 0.04);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + note.time + 0.22);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + note.time);
+                        osc.stop(now + note.time + 0.25);
+                    } catch (e) {}
+                });
+            }, 5500);
+        }
+
+        function playSound(type) {
+            if (isMuted || !audioCtx || audioCtx.state !== 'running') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'tick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.setValueAtTime(110, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+        }
+
+        const modal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalIconContainer = document.getElementById('modal-icon-container');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        let modalCallback = null;
+
+        function showCustomModal(title, message, isSuccess, callback) {
+            modalTitle.innerText = title;
+            modalMessage.innerText = message;
+            modalCallback = callback || null;
+
+            if (isSuccess) {
+                modalIconContainer.className = "w-16 h-16 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner";
+                modalIcon.className = "fa-solid fa-check";
+                modalCloseBtn.className = "w-full bg-gradient-to-b from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 py-3 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg";
+            } else {
+                modalIconContainer.className = "w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner";
+                modalIcon.className = "fa-solid fa-clock-rotate-left";
+                modalCloseBtn.className = "w-full bg-orange-500 hover:bg-orange-600 py-3 rounded-2xl text-white font-black text-lg tracking-wider shadow-lg";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            if (modalCallback) {
+                const cb = modalCallback;
+                modalCallback = null;
+                cb();
+            }
+        });
+
+        // Global State
+        let currentStreak = 0;
+        let globalRound = 1; // 1 = Clock, 2 = Match, 3 = Clock, 4 = Match...
+        let currentLevel = 1;
+
+        // Clock State
+        let targetHour = 9;
+        let targetMinute = 15;
+        let userHourAngle = 0;
+        let userMinuteAngle = 0;
+        let timerInterval = null;
+        let timeLeft = 30;
+        let isDraggingHand = null;
+
+        const phrasalBank = [
+            { id: 1, verb: "put up with", meaning: "chịu đựng kiên nhẫn", level: "C2" },
+            { id: 2, verb: "call off", meaning: "hủy bỏ sự kiện/kế hoạch", level: "C2" },
+            { id: 3, verb: "knuckle down", meaning: "tập trung làm việc nghiêm túc", level: "C2" },
+            { id: 4, verb: "iron out", meaning: "giải quyết ổn thỏa bất đồng", level: "C2" },
+            { id: 5, verb: "gloss over", meaning: "che đậy, lờ đi sai sót", level: "C2" },
+            { id: 6, verb: "phase out", meaning: "loại bỏ dần dần", level: "C2" },
+            { id: 7, verb: "clamp down", meaning: "trấn áp, siết chặt quản lý", level: "C2" },
+            { id: 8, verb: "draw up", meaning: "soạn thảo văn bản/hợp đồng", level: "C2" },
+            { id: 9, verb: "carry out", meaning: "tiến hành thực hiện nhiệm vụ", level: "C2" },
+            { id: 10, verb: "fend off", meaning: "đẩy lùi, né tránh áp lực", level: "C2" },
+            { id: 11, verb: "peter out", meaning: "giảm dần rồi biến mất", level: "C2" },
+            { id: 12, verb: "embark on", meaning: "dấn thân khởi xướng", level: "C2" },
+            { id: 13, verb: "suck up to", meaning: "nịnh nọt, bợ đỡ ai đó", level: "C2" },
+            { id: 14, verb: "step up", meaning: "tăng tốc, đẩy mạnh", level: "C2" },
+            { id: 15, verb: "wind down", meaning: "thư giãn, kết thúc dần", level: "C2" }
+        ];
+        let currentMatchPairs = [];
+        let selectedVerbCard = null;
+        let matchedCount = 0;
+        let completedLines = [];
+
+        const screenHome = document.getElementById('screen-home');
+        const screenGameClock = document.getElementById('screen-game-clock');
+        const screenGameMatch = document.getElementById('screen-game-match');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnBackHome1 = document.getElementById('btn-back-home-1');
+        const btnBackHome2 = document.getElementById('btn-back-home-2');
+
+        // Clock elements
+        const btnCheckClock = document.getElementById('btn-check-clock');
+        const questionText = document.getElementById('question-text');
+        const timerDisplayClock = document.getElementById('timer-display-clock');
+        const streakDisplayClock = document.getElementById('streak-display-clock');
+        const animalThemeLabel = document.getElementById('animal-theme-label');
+        const clockAnimalContainer = document.getElementById('clock-animal-container');
+        const handHour = document.getElementById('hand-hour');
+        const handMinute = document.getElementById('hand-minute');
+        const ghostHands = document.getElementById('ghost-hands');
+        const ghostHour = document.getElementById('ghost-hour');
+        const ghostMinute = document.getElementById('ghost-minute');
+        const clockSvg = document.getElementById('interactive-clock');
+
+        // Match elements
+        const columnVerbs = document.getElementById('column-verbs');
+        const columnMeanings = document.getElementById('column-meanings');
+        const streakDisplayMatch = document.getElementById('streak-display-match');
+        const meaningBox = document.getElementById('meaning-box');
+        const meaningText = document.getElementById('meaning-text');
+        const btnNextMatch = document.getElementById('btn-next-match');
+        const matchLinesSvg = document.getElementById('match-lines-svg');
+        const matchContainer = document.getElementById('match-container');
+
+        const animalThemes = [
+            {
+                name: "🦁 Lion Clock",
+                rim: "#F59E0B",
+                stroke: "#B45309",
+                inner: "#FFFBEB",
+                ears: `<circle cx="38" cy="42" r="28" fill="#D97706" stroke="#B45309" stroke-width="5"/><circle cx="38" cy="42" r="16" fill="#FDE68A"/><circle cx="162" cy="42" r="28" fill="#D97706" stroke="#B45309" stroke-width="5"/><circle cx="162" cy="42" r="16" fill="#FDE68A"/>`,
+                faceDecor: `<ellipse cx="75" cy="85" rx="7" ry="9" fill="#1E293B"/><circle cx="73" cy="83" r="2.5" fill="#FFFFFF"/><ellipse cx="125" cy="85" rx="7" ry="9" fill="#1E293B"/><circle cx="123" cy="83" r="2.5" fill="#FFFFFF"/><ellipse cx="65" cy="98" rx="8" ry="5" fill="#F43F5E" opacity="0.4"/><ellipse cx="135" cy="98" rx="8" ry="5" fill="#F43F5E" opacity="0.4"/><path d="M 94 96 Q 100 102 106 96 Q 100 108 94 96 Z" fill="#B45309"/><line x1="100" y1="102" x2="100" y2="110" stroke="#B45309" stroke-width="3" stroke-linecap="round"/>`
+            },
+            {
+                name: "🐼 Panda Clock",
+                rim: "#334155",
+                stroke: "#0F172A",
+                inner: "#F8FAFC",
+                ears: `<circle cx="42" cy="38" r="26" fill="#0F172A"/><circle cx="158" cy="38" r="26" fill="#0F172A"/>`,
+                faceDecor: `<ellipse cx="75" cy="85" rx="14" ry="11" fill="#0F172A" transform="rotate(-15 75 85)"/><circle cx="75" cy="85" r="6" fill="#FFFFFF"/><circle cx="76" cy="85" r="3" fill="#0F172A"/><ellipse cx="125" cy="85" rx="14" ry="11" fill="#0F172A" transform="rotate(15 125 85)"/><circle cx="125" cy="85" r="6" fill="#FFFFFF"/><circle cx="124" cy="85" r="3" fill="#0F172A"/><ellipse cx="65" cy="100" rx="7" ry="4" fill="#FDA4AF" opacity="0.5"/><ellipse cx="135" cy="100" rx="7" ry="4" fill="#FDA4AF" opacity="0.5"/><ellipse cx="100" cy="96" rx="7" ry="5" fill="#0F172A"/>`
+            },
+            {
+                name: "🐸 Frog Clock",
+                rim: "#10B981",
+                stroke: "#047857",
+                inner: "#ECFDF5",
+                ears: `<circle cx="58" cy="32" r="22" fill="#10B981" stroke="#047857" stroke-width="5"/><circle cx="58" cy="32" r="10" fill="#FFFFFF"/><circle cx="58" cy="32" r="4" fill="#0F172A"/><circle cx="142" cy="32" r="22" fill="#10B981" stroke="#047857" stroke-width="5"/><circle cx="142" cy="32" r="10" fill="#FFFFFF"/><circle cx="142" cy="32" r="4" fill="#0F172A"/>`,
+                faceDecor: `<circle cx="60" cy="100" r="8" fill="#34D399" opacity="0.6"/><circle cx="140" cy="100" r="8" fill="#34D399" opacity="0.6"/><path d="M 75 92 Q 100 114 125 92" fill="none" stroke="#047857" stroke-width="4" stroke-linecap="round"/>`
+            }
+        ];
+
+        function updateAnimalTheme() {
+            const themeIndex = Math.floor((currentLevel - 1) / 3) % animalThemes.length;
+            const theme = animalThemes[themeIndex];
+            animalThemeLabel.innerText = `${theme.name} (Level ${currentLevel})`;
+            
+            clockAnimalContainer.innerHTML = `
+                ${theme.ears}
+                <circle cx="100" cy="100" r="80" fill="${theme.rim}" stroke="${theme.stroke}" stroke-width="6"/>
+                <circle cx="100" cy="100" r="70" fill="${theme.inner}" stroke="${theme.rim}" stroke-width="3"/>
+                ${theme.faceDecor}
+            `;
+        }
+
+        btnStart.addEventListener('click', () => {
+            initAudio();
+            screenHome.classList.add('hidden');
+            currentLevel = 1;
+            globalRound = 1;
+            startRound();
+        });
+
+        function returnHome() {
+            clearInterval(timerInterval);
+            screenGameClock.classList.add('hidden');
+            screenGameMatch.classList.add('hidden');
+            screenHome.classList.remove('hidden');
+        }
+
+        btnBackHome1.addEventListener('click', returnHome);
+        btnBackHome2.addEventListener('click', returnHome);
+
+        function startRound() {
+            document.getElementById('display-level').innerText = currentLevel;
+            document.getElementById('display-level-num').innerText = currentLevel;
+
+            if (globalRound % 2 !== 0) {
+                screenGameMatch.classList.add('hidden');
+                screenGameClock.classList.remove('hidden');
+                updateAnimalTheme();
+                startClockQuestion();
+            } else {
+                screenGameClock.classList.add('hidden');
+                screenGameMatch.classList.remove('hidden');
+                startMatchQuestion();
+            }
+        }
+
+        // ==================== CLOCK GAME LOGIC ====================
+        function generateClockQuestion() {
+            let h = Math.floor(Math.random() * 12) + 1;
+            let m = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55][Math.floor(Math.random() * 11)];
+
+            targetHour = h;
+            targetMinute = m;
+
+            let phrase = "";
+            const nextH = h % 12 + 1;
+
+            if (m === 15) phrase = `a quarter past ${h}`;
+            else if (m === 30) phrase = `half past ${h}`;
+            else if (m === 45) phrase = `a quarter to ${nextH}`;
+            else if (m < 30) phrase = `${m} minutes past ${h}`;
+            else phrase = `${60 - m} minutes to ${nextH}`;
+
+            questionText.innerText = `"Set the clock to ${phrase}"`;
+        }
+
+        function startClockQuestion() {
+            ghostHands.classList.add('hidden');
+            generateClockQuestion();
+            
+            userMinuteAngle = Math.floor(Math.random() * 12) * 30;
+            userHourAngle = Math.floor(Math.random() * 12) * 30;
+            updateClockHandsDisplay();
+
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            timerDisplayClock.innerText = `${timeLeft}s`;
+            timerDisplayClock.classList.remove('text-red-500', 'animate-pulse');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplayClock.innerText = `${timeLeft}s`;
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerDisplayClock.classList.add('text-red-500', 'animate-pulse');
+                    playSound('tick');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleClockAnswer(false, true);
+                }
+            }, 1000);
+        }
+
+        function getAngleFromEvent(e) {
+            const rect = clockSvg.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let rad = Math.atan2(clientY - centerY, clientX - centerX);
+            let deg = rad * (180 / Math.PI) + 90;
+            if (deg < 0) deg += 360;
+            return deg;
+        }
+
+        function handlePointerDown(e) {
+            const angle = getAngleFromEvent(e);
+            const diffMin = Math.abs(angle - (userMinuteAngle % 360));
+            const diffHour = Math.abs(angle - (userHourAngle % 360));
+            isDraggingHand = (diffMin < diffHour) ? 'minute' : 'hour';
+            handlePointerMove(e);
+        }
+
+        function handlePointerMove(e) {
+            if (!isDraggingHand) return;
+            e.preventDefault();
+            let deg = getAngleFromEvent(e);
+            let snap = Math.round(deg / 30) * 30;
+            if (isDraggingHand === 'minute') userMinuteAngle = snap % 360;
+            else userHourAngle = snap % 360;
+            updateClockHandsDisplay();
+        }
+
+        function handlePointerUp() { isDraggingHand = null; }
+
+        clockSvg.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+        clockSvg.addEventListener('touchstart', handlePointerDown);
+        window.addEventListener('touchmove', handlePointerMove, { passive: false });
+        window.addEventListener('touchend', handlePointerUp);
+
+        function updateClockHandsDisplay() {
+            handMinute.style.transform = `rotate(${userMinuteAngle}deg)`;
+            handHour.style.transform = `rotate(${userHourAngle}deg)`;
+        }
+
+        btnCheckClock.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            let userMin = Math.round((userMinuteAngle % 360) / 6);
+            if (userMin === 60) userMin = 0;
+            let userHr = Math.round((userHourAngle % 360) / 30);
+            if (userHr === 0) userHr = 12;
+
+            const isCorrect = (userHr === targetHour) && (userMin === targetMinute);
+            handleClockAnswer(isCorrect, false);
+        });
+
+        function handleClockAnswer(isCorrect, isTimeout) {
+            streakDisplayClock.innerText = `${currentStreak} 🔥`;
+            streakDisplayMatch.innerText = `${currentStreak} 🔥`;
+
+            if (isCorrect) {
+                playSound('correct');
+                currentStreak++;
+                currentLevel++;
+                globalRound++;
+
+                showCustomModal("🎉 CORRECT!", "Fantastic job on the clock challenge!", true, () => {
+                    startRound();
+                });
+            } else {
+                playSound('wrong');
+                currentStreak = 0;
+                ghostMinute.setAttribute('transform', `rotate(${targetMinute * 6} 100 100)`);
+                ghostHour.setAttribute('transform', `rotate(${(targetHour % 12) * 30 + (targetMinute / 60) * 30} 100 100)`);
+                ghostHands.classList.remove('hidden');
+
+                showCustomModal("NOT QUITE!", `The correct time was ${targetHour}:${targetMinute < 10 ? '0' + targetMinute : targetMinute}.`, false, () => {
+                    startRound();
+                });
+            }
+        }
+
+        // ==================== MATCH THE WORD GAME LOGIC ====================
+        function startMatchQuestion() {
+            selectedVerbCard = null;
+            matchedCount = 0;
+            completedLines = [];
+            matchLinesSvg.innerHTML = '';
+            meaningBox.classList.add('hidden');
+            btnNextMatch.classList.add('hidden');
+
+            // Pick 3 random C2 phrasal verb items
+            const shuffled = [...phrasalBank].sort(() => 0.5 - Math.random());
+            currentMatchPairs = shuffled.slice(0, 3);
+
+            renderMatchColumns();
+        }
+
+        function renderMatchColumns() {
+            columnVerbs.innerHTML = '';
+            columnMeanings.innerHTML = '';
+
+            const verbsList = [...currentMatchPairs].sort(() => 0.5 - Math.random());
+            const meaningsList = [...currentMatchPairs].sort(() => 0.5 - Math.random());
+
+            verbsList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "match-node bg-white border-2 border-slate-200 rounded-xl p-3 text-center font-black text-slate-800 shadow cursor-pointer hover:bg-amber-50 hover:border-amber-400";
+                div.dataset.id = item.id;
+                div.dataset.type = "verb";
+                div.innerHTML = `${item.verb} <span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded ml-1">${item.level}</span>`;
+                div.addEventListener('click', () => selectVerbNode(div, item));
+                columnVerbs.appendChild(div);
+            });
+
+            meaningsList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "match-node bg-white border-2 border-slate-200 rounded-xl p-3 text-center font-bold text-slate-700 shadow cursor-pointer hover:bg-amber-50 hover:border-amber-400 text-xs md:text-sm";
+                div.dataset.id = item.id;
+                div.dataset.type = "meaning";
+                div.innerText = item.meaning;
+                div.addEventListener('click', () => selectMeaningNode(div, item));
+                columnMeanings.appendChild(div);
+            });
+        }
+
+        function selectVerbNode(el, item) {
+            if (el.classList.contains('opacity-45')) return;
+            document.querySelectorAll('#column-verbs > div').forEach(d => d.classList.remove('bg-indigo-100', 'border-indigo-600', 'ring-2'));
+            el.classList.add('bg-indigo-100', 'border-indigo-600', 'ring-2');
+            selectedVerbCard = { el, item };
+        }
+
+        function selectMeaningNode(el, item) {
+            if (el.classList.contains('opacity-45')) return;
+            if (!selectedVerbCard) {
+                playSound('wrong');
+                return;
+            }
+
+            const verbEl = selectedVerbCard.el;
+            const verbItem = selectedVerbCard.item;
+
+            if (verbItem.id === item.id) {
+                // Correct match!
+                playSound('correct');
+                currentStreak++;
+                streakDisplayMatch.innerText = `${currentStreak} 🔥`;
+                streakDisplayClock.innerText = `${currentStreak} 🔥`;
+
+                verbEl.className = "match-node bg-green-100 border-2 border-green-500 rounded-xl p-3 text-center font-black text-green-800 shadow opacity-45 pointer-events-none";
+                el.className = "match-node bg-green-100 border-2 border-green-500 rounded-xl p-3 text-center font-bold text-green-900 shadow opacity-45 pointer-events-none text-xs md:text-sm";
+
+                drawConnectionLine(verbEl, el);
+
+                meaningText.innerText = `"${verbItem.verb}" (${verbItem.level}) = ${verbItem.meaning}`;
+                meaningBox.classList.remove('hidden');
+
+                matchedCount++;
+                selectedVerbCard = null;
+
+                if (matchedCount === currentMatchPairs.length) {
+                    btnNextMatch.classList.remove('hidden');
+                }
+            } else {
+                playSound('wrong');
+                verbEl.classList.remove('bg-indigo-100', 'border-indigo-600', 'ring-2');
+                el.classList.add('bg-red-100', 'border-red-400');
+                setTimeout(() => el.classList.remove('bg-red-100', 'border-red-400'), 400);
+                selectedVerbCard = null;
+            }
+        }
+
+        function drawConnectionLine(el1, el2) {
+            const containerRect = matchContainer.getBoundingClientRect();
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+
+            const x1 = rect1.right - containerRect.left;
+            const y1 = rect1.top + rect1.height / 2 - containerRect.top;
+            const x2 = rect2.left - containerRect.left;
+            const y2 = rect2.top + rect2.height / 2 - containerRect.top;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', '#10B981');
+            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-linecap', 'round');
+            matchLinesSvg.appendChild(line);
+        }
+
+        btnNextMatch.addEventListener('click', () => {
+            currentLevel++;
+            globalRound++;
+            startRound();
+        });
+    </script>
+</body>
+</html>
